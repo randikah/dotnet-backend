@@ -1,0 +1,6 @@
+@LaptopStoreApi_HostAddress = http://localhost:5152
+
+GET {{LaptopStoreApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
