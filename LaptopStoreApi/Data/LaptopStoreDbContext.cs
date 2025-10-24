@@ -45,10 +45,10 @@ namespace LaptopStoreApi.Data
                     .HasMaxLength(500);
 
                 entity.Property(e => e.CreatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    .HasDefaultValueSql("UTC_TIMESTAMP()");
 
                 entity.Property(e => e.UpdatedAt)
-                    .HasDefaultValueSql("GETUTCDATE()");
+                    .HasDefaultValueSql("UTC_TIMESTAMP()");
 
                 entity.Property(e => e.IsAvailable)
                     .HasDefaultValue(true);

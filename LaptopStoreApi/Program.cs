@@ -8,9 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container
 builder.Services.AddControllers();
 
-// Configure Entity Framework
+// Configure Entity Framework to use MySQL (Pomelo)
+var mySqlConnection = builder.Configuration.GetConnectionString("MySqlConnection");
 builder.Services.AddDbContext<LaptopStoreDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    // ServerVersion will be auto-detected from the connection string
+    options.UseMySql(mySqlConnection, ServerVersion.AutoDetect(mySqlConnection));
+});
 
 // Register repositories and services
 builder.Services.AddScoped<ILaptopRepository, LaptopRepository>();
@@ -127,6 +131,28 @@ app.MapGet("/weatherforecast", () =>
 // Add a health check endpoint
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }))
    .WithName("HealthCheck")
+   .WithOpenApi();
+
+// Add a DB connectivity test endpoint
+app.MapGet("/dbtest", async (IServiceProvider services) =>
+{
+    try
+    {
+        using var scope = services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<LaptopStoreDbContext>();
+        // Open a DB connection and run a simple server version query
+        var conn = context.Database.GetDbConnection();
+        await conn.OpenAsync();
+        var serverVersion = conn.ServerVersion;
+        await conn.CloseAsync();
+        return Results.Ok(new { status = "Connected", serverVersion });
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(detail: ex.Message, title: "DB Connection Failed");
+    }
+})
+   .WithName("DbTest")
    .WithOpenApi();
 
 // Add a root endpoint that redirects to Swagger
